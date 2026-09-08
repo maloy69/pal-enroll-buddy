@@ -142,7 +142,11 @@ export type Database = {
           code: string
           created_at: string
           description: string | null
+          diploma_criteria_id: string | null
+          exam_criteria_id: string | null
           id: string
+          min_diploma_score: number
+          min_exam_score: number
           name: string
           quota: number
           updated_at: string
@@ -152,7 +156,11 @@ export type Database = {
           code: string
           created_at?: string
           description?: string | null
+          diploma_criteria_id?: string | null
+          exam_criteria_id?: string | null
           id?: string
+          min_diploma_score?: number
+          min_exam_score?: number
           name: string
           quota?: number
           updated_at?: string
@@ -162,12 +170,31 @@ export type Database = {
           code?: string
           created_at?: string
           description?: string | null
+          diploma_criteria_id?: string | null
+          exam_criteria_id?: string | null
           id?: string
+          min_diploma_score?: number
+          min_exam_score?: number
           name?: string
           quota?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "majors_diploma_criteria_id_fkey"
+            columns: ["diploma_criteria_id"]
+            isOneToOne: false
+            referencedRelation: "criteria"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "majors_exam_criteria_id_fkey"
+            columns: ["exam_criteria_id"]
+            isOneToOne: false
+            referencedRelation: "criteria"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
