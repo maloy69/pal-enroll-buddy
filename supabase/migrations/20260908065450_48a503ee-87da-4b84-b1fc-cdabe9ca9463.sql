@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.auto_submit_on_documents() FROM PUBLIC, anon, authenticated;
