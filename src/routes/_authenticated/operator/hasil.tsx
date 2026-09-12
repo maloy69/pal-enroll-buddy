@@ -273,7 +273,7 @@ function HasilPage() {
             ))}
             {peserta.length === 0 && (
               <tr>
-                <td colSpan={(kriteria?.length ?? 0) + 7} className="p-10 text-center text-muted-foreground">
+                <td colSpan={(kriteria?.length ?? 0) + 6} className="p-10 text-center text-muted-foreground">
                   Belum ada pendaftar yang memilih jurusan ini.
                 </td>
               </tr>
