@@ -474,60 +474,6 @@ function DaftarPendaftar() {
           </tbody>
         </table>
       </div>
-      {false && (
-        <table>
-          <tbody>
-            {tampil.map((r) => (
-              <tr key={r.id} className="border-t">
-                <td className="p-3">
-                  <Checkbox
-                    checked={checked.includes(r.id)}
-                    onCheckedChange={(v) =>
-                      setChecked((c) => (v ? [...c, r.id] : c.filter((id) => id !== r.id)))
-                    }
-                    aria-label={`Pilih ${r.full_name ?? ""}`}
-                  />
-                </td>
-                <td className="p-3 font-medium">{r.registration_number}</td>
-                <td className="p-3">{r.full_name ?? "-"}</td>
-                <td className="p-3 text-muted-foreground">{r.nisn ?? "-"}</td>
-                <td className="p-3 text-muted-foreground">{r.gender ?? "-"}</td>
-                <td className="p-3">{namaJurusan(r.first_choice_id)}</td>
-                <td className="p-3">{r.total_score ?? "-"}</td>
-                <td className="p-3 text-muted-foreground">{fmtWIB(r.submitted_at)}</td>
-                <td className="p-3">
-                  <Badge className={STATUS_CLASS[r.status]}>{STATUS_LABEL[r.status]}</Badge>
-                </td>
-                <td className="p-3">
-                  <div className="flex justify-end gap-1">
-                    <Button size="sm" variant="outline" onClick={() => setSelected(r)}>
-                      Periksa
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => bukaEdit(r)} aria-label="Edit">
-                      <Pencil className="size-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => void hapus(r)}
-                      aria-label="Hapus"
-                    >
-                      <Trash2 className="size-4 text-destructive" />
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-            {daftar.length === 0 && (
-              <tr>
-                <td colSpan={10} className="p-10 text-center text-muted-foreground">
-                  Belum ada pendaftar yang cocok dengan filter ini.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
         <span className="text-muted-foreground">
