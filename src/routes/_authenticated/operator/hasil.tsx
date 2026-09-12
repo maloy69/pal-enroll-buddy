@@ -1,8 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Loader2, Sparkles, XCircle } from "lucide-react";
+import { Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { catatAudit, db, STATUS_CLASS, STATUS_LABEL, type RegStatus } from "@/lib/spmb";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -126,24 +127,6 @@ function HasilPage() {
   ).length;
   const sisa = Math.max(0, (jurusan?.quota ?? 0) - diterima);
 
-  async function tetapkan(id: string, terima: boolean, nilaiSkor: number) {
-    setSibuk(true);
-    const payload = terima
-      ? { status: "accepted", accepted_major_id: aktif, total_score: nilaiSkor }
-      : { status: "not_accepted", accepted_major_id: null, total_score: nilaiSkor };
-    const { error } = await db.from("registrations").update(payload).eq("id", id);
-    setSibuk(false);
-    if (error) {
-      toast.error("Gagal menyimpan keputusan.");
-      return;
-    }
-    await catatAudit(terima ? "terima_pendaftar" : "tolak_pendaftar", "registrations", id, {
-      jurusan: jurusan?.name ?? null,
-    });
-    toast.success(terima ? "Pendaftar dinyatakan diterima." : "Pendaftar dinyatakan tidak diterima.");
-    void refetch();
-  }
-
   async function isiNilai(regId: string, criteriaId: string, value: number) {
     const ada = (nilai ?? []).find((v) => v.registration_id === regId && v.criteria_id === criteriaId);
     const { error } = ada
@@ -167,29 +150,18 @@ function HasilPage() {
   async function otomatis() {
     if (!jurusan) return;
     setSibuk(true);
-    const kuota = jurusan.quota;
-    let ke = 0;
-    for (const p of peserta) {
-      const terima = ke < kuota;
-      if (terima) ke += 1;
-      await db
-        .from("registrations")
-        .update(
-          terima
-            ? {
-                status: "accepted",
-                accepted_major_id: aktif,
-                total_score: p.skor,
-                rank: ke,
-              }
-            : { status: "not_accepted", accepted_major_id: null, total_score: p.skor },
-        )
-        .eq("id", p.id);
-    }
+    const { data, error } = await supabase.rpc("run_selection");
     setSibuk(false);
-    await catatAudit("tetapkan_hasil_jurusan", "majors", aktif, { diterima: ke });
-    toast.success(`${ke} pendaftar diterima di ${jurusan.name}.`);
+    if (error) {
+      toast.error("Proses seleksi gagal dijalankan.");
+      return;
+    }
+    await catatAudit("tetapkan_hasil_semua_jurusan", "majors", aktif, {
+      diterima: data ?? 0,
+    });
+    toast.success(`Seleksi selesai. ${data ?? 0} pendaftar ditempatkan sesuai kuota dan pilihan.`);
     void refetch();
+    void refetchNilai();
   }
 
   return (
@@ -226,9 +198,9 @@ function HasilPage() {
               Sisa kursi <strong>{sisa}</strong>
             </span>
             <span className="text-muted-foreground">Peminat: {peserta.length}</span>
-            <Button size="sm" disabled={sibuk || !peserta.length} onClick={() => void otomatis()}>
+            <Button size="sm" disabled={sibuk || !(regs ?? []).length} onClick={() => void otomatis()}>
               {sibuk ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
-              Tetapkan Otomatis Sesuai Kuota
+              Jalankan Seleksi Semua Jurusan
             </Button>
           </div>
           <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
@@ -259,7 +231,6 @@ function HasilPage() {
               ))}
               <th className="p-3 font-medium">Skor</th>
               <th className="p-3 font-medium">Status</th>
-              <th className="p-3 font-medium">Keputusan</th>
             </tr>
           </thead>
           <tbody>
@@ -298,31 +269,11 @@ function HasilPage() {
                 <td className="p-3">
                   <Badge className={STATUS_CLASS[r.status]}>{STATUS_LABEL[r.status]}</Badge>
                 </td>
-                <td className="p-3">
-                  <div className="flex gap-1">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={sibuk}
-                      onClick={() => void tetapkan(r.id, true, r.skor)}
-                    >
-                      <CheckCircle2 className="size-4 text-emerald-600" /> Terima
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={sibuk}
-                      onClick={() => void tetapkan(r.id, false, r.skor)}
-                    >
-                      <XCircle className="size-4 text-destructive" /> Tolak
-                    </Button>
-                  </div>
-                </td>
               </tr>
             ))}
             {peserta.length === 0 && (
               <tr>
-                <td colSpan={8} className="p-10 text-center text-muted-foreground">
+                <td colSpan={(kriteria?.length ?? 0) + 7} className="p-10 text-center text-muted-foreground">
                   Belum ada pendaftar yang memilih jurusan ini.
                 </td>
               </tr>

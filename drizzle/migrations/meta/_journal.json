@@ -15,6 +15,13 @@
       "when": 1789182485012,
       "tag": "0001_seleksi_pilihan_kedua_nilai_minimal",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789183660197,
+      "tag": "0002_enforce_major_quota_and_second_choice",
+      "breakpoints": true
     }
   ]
 }
