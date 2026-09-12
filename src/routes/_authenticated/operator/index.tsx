@@ -517,9 +517,10 @@ function DaftarPendaftar() {
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
         <span className="text-muted-foreground">
-          {daftar.length} pendaftar · halaman {halaman} dari {totalHalaman}
+          {daftar.length} pendaftar
+          {kelompok ? ` · ${grup.length} jurusan` : ` · halaman ${halaman} dari ${totalHalaman}`}
         </span>
-        <div className="flex items-center gap-2">
+        <div className={kelompok ? "hidden" : "flex items-center gap-2"}>
           <select
             className="h-8 rounded-md border border-input bg-background px-2 text-sm"
             value={pageSize}
