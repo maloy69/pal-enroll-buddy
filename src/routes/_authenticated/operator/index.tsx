@@ -438,6 +438,7 @@ function DaftarPendaftar() {
                   aria-label="Pilih semua"
                 />
               </th>
+              <th className="p-3 font-medium">#</th>
               <th className="p-3 font-medium">No. Pendaftaran</th>
               <th className="p-3 font-medium">Nama</th>
               <th className="p-3 font-medium">NISN</th>
@@ -449,6 +450,32 @@ function DaftarPendaftar() {
               <th className="p-3" />
             </tr>
           </thead>
+          <tbody>
+            {(kelompok
+              ? grup.flatMap((g) => [
+                  <tr key={`g-${g.key}`} className="border-t bg-muted/40">
+                    <td colSpan={11} className="px-3 py-2 text-sm font-semibold">
+                      {g.nama}{" "}
+                      <span className="font-normal text-muted-foreground">
+                        · {g.list.length} pendaftar
+                      </span>
+                    </td>
+                  </tr>,
+                  ...g.list.map((r, i) => baris(r, i + 1)),
+                ])
+              : tampil.map((r, i) => baris(r, (halaman - 1) * pageSize + i + 1)))}
+            {daftar.length === 0 && (
+              <tr>
+                <td colSpan={11} className="p-10 text-center text-muted-foreground">
+                  Belum ada pendaftar yang cocok dengan filter ini.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+      {false && (
+        <table>
           <tbody>
             {tampil.map((r) => (
               <tr key={r.id} className="border-t">
