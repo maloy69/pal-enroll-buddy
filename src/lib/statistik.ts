@@ -23,9 +23,13 @@ export function hitungStatus(rows: RegRow[]) {
 }
 
 export function hitungPerJurusan(rows: RegRow[], majors: Major[]) {
+  const sudahDiterima = (r: RegRow) => r.status === "accepted" || r.status === "enrolled";
+  const jurusanDiterima = (r: RegRow) => r.accepted_major_id ?? r.first_choice_id;
   return majors.map((m) => {
-    const peminat = rows.filter((r) => r.first_choice_id === m.id).length;
-    const diterima = rows.filter((r) => r.accepted_major_id === m.id).length;
+    const diterima = rows.filter((r) => sudahDiterima(r) && jurusanDiterima(r) === m.id).length;
+    const peminat = rows.filter(
+      (r) => !sudahDiterima(r) && r.first_choice_id === m.id,
+    ).length;
     return {
       nama: m.code || m.name,
       namaPanjang: m.name,
