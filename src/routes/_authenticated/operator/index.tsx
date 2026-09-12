@@ -81,6 +81,9 @@ function DaftarPendaftar() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [checked, setChecked] = useState<string[]>([]);
+  const [filterJurusan, setFilterJurusan] = useState("all");
+  const [urut, setUrut] = useState<"skor_desc" | "skor_asc" | "terbaru">("skor_desc");
+  const [kelompok, setKelompok] = useState(true);
 
 
 
