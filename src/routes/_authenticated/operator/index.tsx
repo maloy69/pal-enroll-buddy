@@ -353,6 +353,46 @@ function DaftarPendaftar() {
             </option>
           ))}
         </select>
+        <select
+          className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+          value={filterJurusan}
+          onChange={(e) => {
+            setFilterJurusan(e.target.value);
+            setPage(1);
+          }}
+          aria-label="Filter jurusan"
+        >
+          <option value="all">Semua Jurusan</option>
+          {(majors ?? []).map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.name}
+            </option>
+          ))}
+        </select>
+        <select
+          className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+          value={urut}
+          onChange={(e) => {
+            setUrut(e.target.value as typeof urut);
+            setPage(1);
+          }}
+          aria-label="Urutkan"
+        >
+          <option value="skor_desc">Skor tertinggi</option>
+          <option value="skor_asc">Skor terendah</option>
+          <option value="terbaru">Terbaru dikirim</option>
+        </select>
+        <label className="flex h-9 items-center gap-2 rounded-md border border-input px-3 text-sm">
+          <Checkbox
+            checked={kelompok}
+            onCheckedChange={(v) => {
+              setKelompok(!!v);
+              setPage(1);
+            }}
+            aria-label="Kelompokkan per jurusan"
+          />
+          Kelompokkan per jurusan
+        </label>
         <Button variant="outline" onClick={unduh}>
           <Download className="mr-1 size-4" /> Unduh CSV
         </Button>
