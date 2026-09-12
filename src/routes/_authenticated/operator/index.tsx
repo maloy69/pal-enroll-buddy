@@ -133,18 +133,29 @@ function DaftarPendaftar() {
     },
   });
 
+  const jurusanRow = (r: Reg) =>
+    (r["accepted_major_id"] as string | null) ?? r.first_choice_id ?? null;
+
   const daftar = useMemo(() => {
     const t = q.trim().toLowerCase();
-    return (rows ?? []).filter((r) => {
+    const hasil = (rows ?? []).filter((r) => {
       const okStatus = filter === "all" || r.status === filter;
+      const okJurusan = filterJurusan === "all" || jurusanRow(r) === filterJurusan;
       const okCari =
         !t ||
         (r.full_name ?? "").toLowerCase().includes(t) ||
         (r.registration_number ?? "").toLowerCase().includes(t) ||
         (r.nisn ?? "").includes(t);
-      return okStatus && okCari;
+      return okStatus && okJurusan && okCari;
     });
-  }, [rows, filter, q]);
+    const skor = (r: Reg) => r.total_score ?? -1;
+    const waktu = (r: Reg) => (r.submitted_at ? new Date(r.submitted_at).getTime() : 0);
+    return [...hasil].sort((a, b) => {
+      if (urut === "skor_desc") return skor(b) - skor(a) || waktu(a) - waktu(b);
+      if (urut === "skor_asc") return skor(a) - skor(b) || waktu(a) - waktu(b);
+      return waktu(b) - waktu(a);
+    });
+  }, [rows, filter, filterJurusan, q, urut]);
 
   async function ubahStatus(reg: Reg, status: RegStatus, note?: string) {
     const payload: Record<string, unknown> = { status, verify_note: note ?? null };
