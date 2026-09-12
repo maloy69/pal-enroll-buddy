@@ -179,6 +179,7 @@ function DaftarPendaftar() {
       { onConflict: "registration_id,criteria_id" },
     );
     void refetchScores();
+    void refetch();
   }
 
   const namaJurusan = (id: string | null) => majors?.find((m) => m.id === id)?.name ?? "-";
