@@ -46,9 +46,6 @@ const STATUS_PILIHAN: RegStatus[] = [
   "submitted",
   "verified",
   "rejected",
-  "accepted",
-  "not_accepted",
-  "enrolled",
 ];
 
 function Field({
@@ -259,6 +256,9 @@ export function RegistrationForm({
                 </option>
               ))}
             </select>
+            <p className="text-xs text-muted-foreground">
+              Status hasil ditentukan melalui proses seleksi agar kuota dan pilihan kedua diterapkan.
+            </p>
           </Field>
           <div className="sm:col-span-2">
             <Field label="Catatan verifikasi (opsional)">

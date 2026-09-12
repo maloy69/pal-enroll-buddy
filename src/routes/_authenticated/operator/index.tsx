@@ -70,6 +70,8 @@ const FILTER: { key: string; label: string }[] = [
   { key: "enrolled", label: "Daftar Ulang Selesai" },
 ];
 
+const STATUS_MASSAL: RegStatus[] = ["submitted", "verified", "rejected"];
+
 function DaftarPendaftar() {
   const [filter, setFilter] = useState("all");
   const [q, setQ] = useState("");
@@ -338,7 +340,7 @@ function DaftarPendaftar() {
             }}
           >
             <option value="">Ubah status massal…</option>
-            {FILTER.filter((f) => f.key !== "all").map((f) => (
+            {FILTER.filter((f) => STATUS_MASSAL.includes(f.key as RegStatus)).map((f) => (
               <option key={f.key} value={f.key}>
                 {f.label}
               </option>
