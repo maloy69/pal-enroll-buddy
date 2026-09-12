@@ -198,10 +198,28 @@ function DaftarPendaftar() {
 
   const namaJurusan = (id: string | null) => majors?.find((m) => m.id === id)?.name ?? "-";
 
-  const totalHalaman = Math.max(1, Math.ceil(daftar.length / pageSize));
+  const totalHalaman = kelompok ? 1 : Math.max(1, Math.ceil(daftar.length / pageSize));
   const halaman = Math.min(page, totalHalaman);
-  const tampil = daftar.slice((halaman - 1) * pageSize, halaman * pageSize);
+  const tampil = kelompok ? daftar : daftar.slice((halaman - 1) * pageSize, halaman * pageSize);
   const semuaTercentang = tampil.length > 0 && tampil.every((r) => checked.includes(r.id));
+
+  const grup = useMemo(() => {
+    if (!kelompok) return [];
+    const map = new Map<string, Reg[]>();
+    for (const r of tampil) {
+      const key = jurusanRow(r) ?? "tanpa";
+      const list = map.get(key) ?? [];
+      list.push(r);
+      map.set(key, list);
+    }
+    return [...map.entries()]
+      .map(([key, list]) => ({
+        key,
+        nama: key === "tanpa" ? "Belum memilih jurusan" : namaJurusan(key),
+        list,
+      }))
+      .sort((a, b) => a.nama.localeCompare(b.nama));
+  }, [tampil, kelompok, majors]);
 
   function bukaTambah() {
     setFormAwal(null);
