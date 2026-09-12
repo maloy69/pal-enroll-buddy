@@ -171,7 +171,8 @@ function HasilPage() {
           <CardTitle className="text-base">Hasil Seleksi per Jurusan</CardTitle>
           <CardDescription>
             Skor dihitung dari kriteria aktif beserta bobotnya. Anda bisa mengisi nilai langsung di
-            tabel, menetapkan hasil satu per satu, atau menetapkan otomatis sesuai kuota jurusan.
+            tabel, lalu menjalankan seleksi untuk menempatkan pendaftar ke pilihan pertama atau kedua
+            sesuai skor, syarat, dan kuota seluruh jurusan.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
