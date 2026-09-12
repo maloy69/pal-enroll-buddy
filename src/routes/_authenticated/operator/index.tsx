@@ -221,6 +221,46 @@ function DaftarPendaftar() {
       .sort((a, b) => a.nama.localeCompare(b.nama));
   }, [tampil, kelompok, majors]);
 
+  function baris(r: Reg, no: number) {
+    return (
+      <tr key={r.id} className="border-t">
+        <td className="p-3">
+          <Checkbox
+            checked={checked.includes(r.id)}
+            onCheckedChange={(v) =>
+              setChecked((c) => (v ? [...c, r.id] : c.filter((id) => id !== r.id)))
+            }
+            aria-label={`Pilih ${r.full_name ?? ""}`}
+          />
+        </td>
+        <td className="p-3 text-muted-foreground">{no}</td>
+        <td className="p-3 font-medium">{r.registration_number}</td>
+        <td className="p-3">{r.full_name ?? "-"}</td>
+        <td className="p-3 text-muted-foreground">{r.nisn ?? "-"}</td>
+        <td className="p-3 text-muted-foreground">{r.gender ?? "-"}</td>
+        <td className="p-3">{namaJurusan(r.first_choice_id)}</td>
+        <td className="p-3 font-medium">{r.total_score ?? "-"}</td>
+        <td className="p-3 text-muted-foreground">{fmtWIB(r.submitted_at)}</td>
+        <td className="p-3">
+          <Badge className={STATUS_CLASS[r.status]}>{STATUS_LABEL[r.status]}</Badge>
+        </td>
+        <td className="p-3">
+          <div className="flex justify-end gap-1">
+            <Button size="sm" variant="outline" onClick={() => setSelected(r)}>
+              Periksa
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => bukaEdit(r)} aria-label="Edit">
+              <Pencil className="size-4" />
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => void hapus(r)} aria-label="Hapus">
+              <Trash2 className="size-4 text-destructive" />
+            </Button>
+          </div>
+        </td>
+      </tr>
+    );
+  }
+
   function bukaTambah() {
     setFormAwal(null);
     setFormOpen(true);
