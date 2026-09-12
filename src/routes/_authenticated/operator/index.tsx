@@ -81,6 +81,9 @@ function DaftarPendaftar() {
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(25);
   const [checked, setChecked] = useState<string[]>([]);
+  const [filterJurusan, setFilterJurusan] = useState("all");
+  const [urut, setUrut] = useState<"skor_desc" | "skor_asc" | "terbaru">("skor_desc");
+  const [kelompok, setKelompok] = useState(true);
 
 
 
@@ -133,18 +136,29 @@ function DaftarPendaftar() {
     },
   });
 
+  const jurusanRow = (r: Reg) =>
+    (r["accepted_major_id"] as string | null) ?? r.first_choice_id ?? null;
+
   const daftar = useMemo(() => {
     const t = q.trim().toLowerCase();
-    return (rows ?? []).filter((r) => {
+    const hasil = (rows ?? []).filter((r) => {
       const okStatus = filter === "all" || r.status === filter;
+      const okJurusan = filterJurusan === "all" || jurusanRow(r) === filterJurusan;
       const okCari =
         !t ||
         (r.full_name ?? "").toLowerCase().includes(t) ||
         (r.registration_number ?? "").toLowerCase().includes(t) ||
         (r.nisn ?? "").includes(t);
-      return okStatus && okCari;
+      return okStatus && okJurusan && okCari;
     });
-  }, [rows, filter, q]);
+    const skor = (r: Reg) => r.total_score ?? -1;
+    const waktu = (r: Reg) => (r.submitted_at ? new Date(r.submitted_at).getTime() : 0);
+    return [...hasil].sort((a, b) => {
+      if (urut === "skor_desc") return skor(b) - skor(a) || waktu(a) - waktu(b);
+      if (urut === "skor_asc") return skor(a) - skor(b) || waktu(a) - waktu(b);
+      return waktu(b) - waktu(a);
+    });
+  }, [rows, filter, filterJurusan, q, urut]);
 
   async function ubahStatus(reg: Reg, status: RegStatus, note?: string) {
     const payload: Record<string, unknown> = { status, verify_note: note ?? null };
@@ -184,10 +198,68 @@ function DaftarPendaftar() {
 
   const namaJurusan = (id: string | null) => majors?.find((m) => m.id === id)?.name ?? "-";
 
-  const totalHalaman = Math.max(1, Math.ceil(daftar.length / pageSize));
+  const totalHalaman = kelompok ? 1 : Math.max(1, Math.ceil(daftar.length / pageSize));
   const halaman = Math.min(page, totalHalaman);
-  const tampil = daftar.slice((halaman - 1) * pageSize, halaman * pageSize);
+  const tampil = kelompok ? daftar : daftar.slice((halaman - 1) * pageSize, halaman * pageSize);
   const semuaTercentang = tampil.length > 0 && tampil.every((r) => checked.includes(r.id));
+
+  const grup = useMemo(() => {
+    if (!kelompok) return [];
+    const map = new Map<string, Reg[]>();
+    for (const r of tampil) {
+      const key = jurusanRow(r) ?? "tanpa";
+      const list = map.get(key) ?? [];
+      list.push(r);
+      map.set(key, list);
+    }
+    return [...map.entries()]
+      .map(([key, list]) => ({
+        key,
+        nama: key === "tanpa" ? "Belum memilih jurusan" : namaJurusan(key),
+        list,
+      }))
+      .sort((a, b) => a.nama.localeCompare(b.nama));
+  }, [tampil, kelompok, majors]);
+
+  function baris(r: Reg, no: number) {
+    return (
+      <tr key={r.id} className="border-t">
+        <td className="p-3">
+          <Checkbox
+            checked={checked.includes(r.id)}
+            onCheckedChange={(v) =>
+              setChecked((c) => (v ? [...c, r.id] : c.filter((id) => id !== r.id)))
+            }
+            aria-label={`Pilih ${r.full_name ?? ""}`}
+          />
+        </td>
+        <td className="p-3 text-muted-foreground">{no}</td>
+        <td className="p-3 font-medium">{r.registration_number}</td>
+        <td className="p-3">{r.full_name ?? "-"}</td>
+        <td className="p-3 text-muted-foreground">{r.nisn ?? "-"}</td>
+        <td className="p-3 text-muted-foreground">{r.gender ?? "-"}</td>
+        <td className="p-3">{namaJurusan(r.first_choice_id)}</td>
+        <td className="p-3 font-medium">{r.total_score ?? "-"}</td>
+        <td className="p-3 text-muted-foreground">{fmtWIB(r.submitted_at)}</td>
+        <td className="p-3">
+          <Badge className={STATUS_CLASS[r.status]}>{STATUS_LABEL[r.status]}</Badge>
+        </td>
+        <td className="p-3">
+          <div className="flex justify-end gap-1">
+            <Button size="sm" variant="outline" onClick={() => setSelected(r)}>
+              Periksa
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => bukaEdit(r)} aria-label="Edit">
+              <Pencil className="size-4" />
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => void hapus(r)} aria-label="Hapus">
+              <Trash2 className="size-4 text-destructive" />
+            </Button>
+          </div>
+        </td>
+      </tr>
+    );
+  }
 
   function bukaTambah() {
     setFormAwal(null);
@@ -321,6 +393,46 @@ function DaftarPendaftar() {
             </option>
           ))}
         </select>
+        <select
+          className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+          value={filterJurusan}
+          onChange={(e) => {
+            setFilterJurusan(e.target.value);
+            setPage(1);
+          }}
+          aria-label="Filter jurusan"
+        >
+          <option value="all">Semua Jurusan</option>
+          {(majors ?? []).map((m) => (
+            <option key={m.id} value={m.id}>
+              {m.name}
+            </option>
+          ))}
+        </select>
+        <select
+          className="h-9 rounded-md border border-input bg-background px-3 text-sm"
+          value={urut}
+          onChange={(e) => {
+            setUrut(e.target.value as typeof urut);
+            setPage(1);
+          }}
+          aria-label="Urutkan"
+        >
+          <option value="skor_desc">Skor tertinggi</option>
+          <option value="skor_asc">Skor terendah</option>
+          <option value="terbaru">Terbaru dikirim</option>
+        </select>
+        <label className="flex h-9 items-center gap-2 rounded-md border border-input px-3 text-sm">
+          <Checkbox
+            checked={kelompok}
+            onCheckedChange={(v) => {
+              setKelompok(!!v);
+              setPage(1);
+            }}
+            aria-label="Kelompokkan per jurusan"
+          />
+          Kelompokkan per jurusan
+        </label>
         <Button variant="outline" onClick={unduh}>
           <Download className="mr-1 size-4" /> Unduh CSV
         </Button>
@@ -366,6 +478,7 @@ function DaftarPendaftar() {
                   aria-label="Pilih semua"
                 />
               </th>
+              <th className="p-3 font-medium">#</th>
               <th className="p-3 font-medium">No. Pendaftaran</th>
               <th className="p-3 font-medium">Nama</th>
               <th className="p-3 font-medium">NISN</th>
@@ -378,50 +491,22 @@ function DaftarPendaftar() {
             </tr>
           </thead>
           <tbody>
-            {tampil.map((r) => (
-              <tr key={r.id} className="border-t">
-                <td className="p-3">
-                  <Checkbox
-                    checked={checked.includes(r.id)}
-                    onCheckedChange={(v) =>
-                      setChecked((c) => (v ? [...c, r.id] : c.filter((id) => id !== r.id)))
-                    }
-                    aria-label={`Pilih ${r.full_name ?? ""}`}
-                  />
-                </td>
-                <td className="p-3 font-medium">{r.registration_number}</td>
-                <td className="p-3">{r.full_name ?? "-"}</td>
-                <td className="p-3 text-muted-foreground">{r.nisn ?? "-"}</td>
-                <td className="p-3 text-muted-foreground">{r.gender ?? "-"}</td>
-                <td className="p-3">{namaJurusan(r.first_choice_id)}</td>
-                <td className="p-3">{r.total_score ?? "-"}</td>
-                <td className="p-3 text-muted-foreground">{fmtWIB(r.submitted_at)}</td>
-                <td className="p-3">
-                  <Badge className={STATUS_CLASS[r.status]}>{STATUS_LABEL[r.status]}</Badge>
-                </td>
-                <td className="p-3">
-                  <div className="flex justify-end gap-1">
-                    <Button size="sm" variant="outline" onClick={() => setSelected(r)}>
-                      Periksa
-                    </Button>
-                    <Button size="sm" variant="ghost" onClick={() => bukaEdit(r)} aria-label="Edit">
-                      <Pencil className="size-4" />
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => void hapus(r)}
-                      aria-label="Hapus"
-                    >
-                      <Trash2 className="size-4 text-destructive" />
-                    </Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
+            {(kelompok
+              ? grup.flatMap((g) => [
+                  <tr key={`g-${g.key}`} className="border-t bg-muted/40">
+                    <td colSpan={11} className="px-3 py-2 text-sm font-semibold">
+                      {g.nama}{" "}
+                      <span className="font-normal text-muted-foreground">
+                        · {g.list.length} pendaftar
+                      </span>
+                    </td>
+                  </tr>,
+                  ...g.list.map((r, i) => baris(r, i + 1)),
+                ])
+              : tampil.map((r, i) => baris(r, (halaman - 1) * pageSize + i + 1)))}
             {daftar.length === 0 && (
               <tr>
-                <td colSpan={10} className="p-10 text-center text-muted-foreground">
+                <td colSpan={11} className="p-10 text-center text-muted-foreground">
                   Belum ada pendaftar yang cocok dengan filter ini.
                 </td>
               </tr>
@@ -432,9 +517,10 @@ function DaftarPendaftar() {
 
       <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm">
         <span className="text-muted-foreground">
-          {daftar.length} pendaftar · halaman {halaman} dari {totalHalaman}
+          {daftar.length} pendaftar
+          {kelompok ? ` · ${grup.length} jurusan` : ` · halaman ${halaman} dari ${totalHalaman}`}
         </span>
-        <div className="flex items-center gap-2">
+        <div className={kelompok ? "hidden" : "flex items-center gap-2"}>
           <select
             className="h-8 rounded-md border border-input bg-background px-2 text-sm"
             value={pageSize}
